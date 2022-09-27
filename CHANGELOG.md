@@ -1,3 +1,9 @@
+#### 0.1.2 (2022-09-27)
+
+##### Bug Fixes
+
+- Don't let pending status checks pass ([bfe44937](https://github.com/bennycode/stop-merging/commit/bfe44937aa6dcc86bd9c909d4f94e67815fc99d8))
+
 ### 0.1.0 (2022-09-27)
 
 ##### Documentation Changes
