@@ -51,7 +51,7 @@
   },
   "scripts": {
     "build": "ncc build src/main.ts -o release",
-    "changelog:commit": "git add CHANGELOG.md && git commit -m \"docs: updated CHANGELOG.md\"",
+    "changelog:commit": "git add CHANGELOG.md release/index.js && git commit -m \"chore: Updated release\"",
     "clean": "rimraf .nyc_output coverage dist",
     "debug": "node --inspect -r ts-node/register ./src/start.ts",
     "dist": "yarn clean && yarn build",
@@ -61,7 +61,7 @@
     "lint": "yarn lint:code && yarn lint:config",
     "lint:code": "eslint --ignore-path .gitignore --ext .js,.jsx,.ts,.tsx --no-error-on-unmatched-pattern .",
     "lint:config": "yarn prettier --list-different",
-    "postversion": "git push origin && git push origin --tags && npm publish --access public",
+    "postversion": "git push origin && git push origin --tags",
     "prettier": "prettier --ignore-path .gitignore --loglevel error .",
     "preversion": "git checkout main && git pull && yarn && yarn test && yarn dist",
     "release:major": "generate-changelog -M -x \"chore,test\" && yarn changelog:commit && npm version major",
