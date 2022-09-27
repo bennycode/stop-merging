@@ -12,9 +12,9 @@ Your main branch is considered to be broken, when the latest commit on this bran
 
 ## How to install?
 
-1. Install this action from the [GitHub Marketplace](https://github.com/marketplace)
-2. Add [branch protection](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/about-protected-branches) rule to your GitHub repository
-3. Require [status checks](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/troubleshooting-required-status-checks) to pass before merging
+1. [Install this action](https://github.com/marketplace/actions/stop-merging) from the GitHub Marketplace
+2. [Add branch protection](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/about-protected-branches) rule to your GitHub repository
+3. [Require status checks](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/troubleshooting-required-status-checks) to pass before merging
 4. Add this action as a required status check
 
 ## How to use?

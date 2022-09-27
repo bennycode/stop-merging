@@ -42,10 +42,8 @@ async function run(): Promise<void> {
       .sort((a, b) => a.id - b.id);
 
     if (completedCheckSuites.length === 0) {
-      console.log(
-        `There are no completed check suites on branch "${gitBranch}". You can read more about check suites here: https://docs.github.com/en/rest/guides/getting-started-with-the-checks-api#about-check-suites`
-      );
-      process.exit(0);
+      const errorMessage = `There are no completed (still pending or not created at all) check suites on branch "${gitBranch}". You can read more about check suites here: https://docs.github.com/en/rest/guides/getting-started-with-the-checks-api#about-check-suites`;
+      throw new Error(errorMessage);
     } else {
       console.log(`Found "${completedCheckSuites.length}" completed check suites on branch "${gitBranch}".`);
     }
@@ -61,11 +59,17 @@ async function run(): Promise<void> {
     );
 
     // Check if there is a broken branch and if the PR addresses this with a commit that can bypass the status check
-    if (latestRun.conclusion === 'failure' && !title.startsWith(bypassPrefix)) {
+    const bypassMergeCheck = title.startsWith(bypassPrefix);
+
+    if (latestRun.conclusion === 'failure' && !bypassMergeCheck) {
       const errorMessage = `CI status check on branch "${gitBranch}" broke by this commit from "${latestRun.head_commit.author?.name}": ${commitUrl}`;
       throw new Error(errorMessage);
     } else {
-      console.log(`Check suite with ID "${latestRun.id}" did not fail but was "${latestRun.conclusion}".`);
+      console.log(`Matched check suite with ID "${latestRun.id}" has status "${latestRun.conclusion}".`);
+    }
+
+    if (bypassMergeCheck) {
+      console.log(`Mergeability was granted because PR title matches bypass prefix`);
     }
   } catch (error) {
     if (error instanceof Error) {
