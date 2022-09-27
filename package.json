@@ -1,18 +1,19 @@
 {
-  "bin": {
-    "ts-node-starter": "dist/cli.js"
-  },
   "bugs": {
-    "url": "https://github.com/bennycode/ts-node-starter/issues"
+    "url": "https://github.com/bennycode/stop-merging/issues"
   },
-  "dependencies": {},
-  "description": "",
+  "dependencies": {
+    "@actions/core": "1.9.1",
+    "@actions/github": "5.1.0"
+  },
+  "description": "GitHub Action to stop Pull Request merges when your main branch is broken.",
   "devDependencies": {
     "@arkweid/lefthook": "0.7.7",
     "@types/jest": "28.1.6",
     "@types/node": "18.7.14",
     "@typescript-eslint/eslint-plugin": "5.36.1",
     "@typescript-eslint/parser": "5.36.1",
+    "@vercel/ncc": "0.34.0",
     "cross-env": "7.0.3",
     "eslint": "8.23.0",
     "eslint-config-prettier": "8.5.0",
@@ -37,18 +38,19 @@
     "dist",
     "!dist/**/*.test.*"
   ],
-  "homepage": "https://www.npmjs.com/package/ts-node-starter",
-  "keywords": [],
-  "license": "UNLICENSED",
-  "main": "dist/index.js",
-  "name": "@bennycode/ts-node-starter",
-  "private": false,
+  "homepage": "https://www.npmjs.com/package/stop-merging",
+  "keywords": [
+    "actions"
+  ],
+  "license": "MIT",
+  "name": "stop-merging",
+  "private": true,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bennycode/ts-node-starter.git"
+    "url": "git+https://github.com/bennycode/stop-merging.git"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "ncc build src/main.ts -o release",
     "changelog:commit": "git add CHANGELOG.md && git commit -m \"docs: updated CHANGELOG.md\"",
     "clean": "rimraf .nyc_output coverage dist",
     "debug": "node --inspect -r ts-node/register ./src/start.ts",

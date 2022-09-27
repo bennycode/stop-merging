@@ -1,0 +1,21 @@
+name: 'Stop Merging'
+description: 'GitHub Action to stop Pull Request merges when your main branch is broken.'
+# https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions#branding
+branding:
+  icon: 'alert-octagon'
+  color: 'red'
+inputs:
+  GITHUB_TOKEN:
+    required: true
+    description: 'GitHub Token with "repo" scope'
+  GIT_BRANCH:
+    required: false
+    description: 'Branch to check'
+    default: 'main'
+  BYPASS_PREFIX:
+    required: false
+    description: 'Commit prefix which can bypass the status check'
+    default: 'fix'
+runs:
+  using: 'node16'
+  main: 'release/index.js'

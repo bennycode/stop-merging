@@ -1,4 +1,5 @@
 {
+  "ignorePatterns": ["**/release/*.js"],
   "env": {
     "browser": true,
     "node": true
