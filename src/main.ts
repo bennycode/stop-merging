@@ -1,3 +1,4 @@
+import os from 'os';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 
@@ -71,7 +72,7 @@ async function run(): Promise<void> {
     }
   } catch (error) {
     if (error instanceof Error) {
-      error.message += `\r\nYou can skip this check by using the prefix "${bypassPrefix}" in your PR title.`;
+      error.message += `${os.EOL}You can skip this check by using the prefix "${bypassPrefix}" in your PR title.`;
       core.setFailed(error);
       console.error(error);
     }
