@@ -45,13 +45,13 @@ jobs:
 
 Equip your base branch with branch protection rules:
 
-![](./img/branch-protection-rules.png)
+![](https://raw.githubusercontent.com/bennycode/stop-merging/main/img/branch-protection-rules.png)
 
 ### 3. Require status checks
 
 It is recommended to add a status check that detects if your branch is broken (for example, a unit test check) and an additional check for the "Stop Merging" action (i.e. "check-main"):
 
-![](./img/status-checks.png)
+![](https://raw.githubusercontent.com/bennycode/stop-merging/main/img/status-checks.png)
 
 ## How to use?
 
