@@ -2,10 +2,17 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 
 async function run(): Promise<void> {
-  try {
-    // PR Title Check
-    const title = github.context.payload.pull_request?.title;
+  // PR Title Check
+  const title = github.context.payload.pull_request?.title;
+  const bypassPrefix = core.getInput('BYPASS_PREFIX');
 
+  // Authentication
+  // https://github.com/actions/toolkit/tree/main/packages/github#usage
+  // https://help.github.com/en/actions/automating-your-workflow-with-github-actions/authenticating-with-the-github_token#about-the-github_token-secret
+  const githubToken = core.getInput('GITHUB_TOKEN', {required: true});
+  const octokit = github.getOctokit(githubToken);
+
+  try {
     if (!title) {
       console.log(`Skipping checks because action was not triggered in the context of a Pull Request.`);
       process.exit(0);
@@ -14,15 +21,6 @@ async function run(): Promise<void> {
     // Repository info
     const {owner, repo} = github.context.repo;
     const gitBranch = core.getInput('GIT_BRANCH');
-
-    // Authentication
-    // https://github.com/actions/toolkit/tree/main/packages/github#usage
-    // https://help.github.com/en/actions/automating-your-workflow-with-github-actions/authenticating-with-the-github_token#about-the-github_token-secret
-    const githubToken = core.getInput('GITHUB_TOKEN', {required: true});
-    const octokit = github.getOctokit(githubToken);
-
-    // Further configuration
-    const bypassPrefix = core.getInput('BYPASS_PREFIX');
 
     // Checks API
     // https://docs.github.com/en/rest/checks/suites#list-check-suites-for-a-git-reference
@@ -73,7 +71,8 @@ async function run(): Promise<void> {
     }
   } catch (error) {
     if (error instanceof Error) {
-      core.setFailed(error.message);
+      error.message += `\r\nYou can skip this check by using the prefix "${bypassPrefix}" in your PR title.`;
+      core.setFailed(error);
       console.error(error);
     }
   }
