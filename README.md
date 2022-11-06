@@ -15,7 +15,43 @@ Your main branch is considered to be broken, when the latest commit on this bran
 1. [Install this action](https://github.com/marketplace/actions/stop-merging) from the GitHub Marketplace
 2. [Add branch protection](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/about-protected-branches) rule to your GitHub repository
 3. [Require status checks](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/troubleshooting-required-status-checks) to pass before merging
-4. Add this action as a required status check
+
+### 1. Install this action
+
+It's as simple as creating this file:
+
+**.github/workflows/stop-merging.yml**
+
+```yml
+name: 'Check Mergeability'
+
+on:
+  pull_request:
+    # With "edited" it runs on PR title updates
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  check-main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: bennycode/stop-merging@v0.1.3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_BRANCH: 'main'
+          BYPASS_PREFIX: 'fix'
+```
+
+### 2. Add branch protection
+
+Equip your base branch with branch protection rules:
+
+![](./img/branch-protection-rules.png)
+
+### 3. Require status checks
+
+It is recommended to add a status check that detects if your branch is broken (for example, a unit test check) and an additional check for the "Stop Merging" action (i.e. "check-main"):
+
+![](./img/status-checks.png)
 
 ## How to use?
 
