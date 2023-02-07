@@ -5,13 +5,13 @@ import * as github from '@actions/github';
 async function run(): Promise<void> {
   // PR Title Check
   const title = github.context.payload.pull_request?.title;
-  const bypassPrefix = core.getInput('BYPASS_PREFIX');
+  const bypassPrefix = process.env.CI ? core.getInput('BYPASS_PREFIX') : process.env.BYPASS_PREFIX;
 
   // Authentication
   // https://github.com/actions/toolkit/tree/main/packages/github#usage
   // https://help.github.com/en/actions/automating-your-workflow-with-github-actions/authenticating-with-the-github_token#about-the-github_token-secret
-  const githubToken = core.getInput('GITHUB_TOKEN', {required: true});
-  const octokit = github.getOctokit(githubToken);
+  const githubToken = process.env.CI ? core.getInput('GITHUB_TOKEN', {required: true}) : process.env.GITHUB_TOKEN;
+  const octokit = github.getOctokit(`${githubToken}`);
 
   try {
     if (!title) {
@@ -21,13 +21,13 @@ async function run(): Promise<void> {
 
     // Repository info
     const {owner, repo} = github.context.repo;
-    const gitBranch = core.getInput('GIT_BRANCH');
+    const gitBranch = process.env.CI ? core.getInput('GIT_BRANCH') : process.env.GIT_BRANCH;
 
     // Checks API
     // https://docs.github.com/en/rest/checks/suites#list-check-suites-for-a-git-reference
     const {data: checkSuitesPayload} = await octokit.request('GET /repos/{owner}/{repo}/commits/{ref}/check-suites', {
       owner,
-      ref: gitBranch,
+      ref: `${gitBranch}`,
       repo,
     });
 

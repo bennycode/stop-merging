@@ -49,7 +49,19 @@ Equip your base branch with branch protection rules:
 
 ### 3. Require status checks
 
-It is recommended to add a status check that detects if your branch is broken (for example, a unit test check) and an additional check for the "Stop Merging" action (i.e. "check-main"):
+Enable "**Require status checks to pass before merging**" and make sure to have at least two status checks:
+
+1. A check if your branch is broken (i.e. a "test" suite with unit tests)
+2. The "Stop Merging" check (i.e. "check-main")
+
+It is also recommended to enable "**Require branches to be up to date before merging**". This will handle the following scenario:
+
+- Main branch is okay
+- Coder A creates a PR that passes the "Stop Merging" check
+- Coder B breaks the main branch
+- Coder A would now be able to still merge IF there wouldn't be the requirement to keep the branch up to date
+
+**Screenshot:**
 
 ![](https://raw.githubusercontent.com/bennycode/stop-merging/main/img/status-checks.png)
 
