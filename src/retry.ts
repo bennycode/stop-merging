@@ -1,6 +1,6 @@
 import {wait} from './wait';
 
-var globalVar = 0;
+let globalVar = 0;
 
 const myAction = () =>
   new Promise<void>((resolve, reject) => {
