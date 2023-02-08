@@ -212,7 +212,6 @@
       const utils_1 = __nccwpck_require__(5278);
       const os = __importStar(__nccwpck_require__(2037));
       const path = __importStar(__nccwpck_require__(1017));
-      const uuid_1 = __nccwpck_require__(5840);
       const oidc_utils_1 = __nccwpck_require__(8041);
       /**
        * The code to exit an action
@@ -242,19 +241,9 @@
         process.env[name] = convertedVal;
         const filePath = process.env['GITHUB_ENV'] || '';
         if (filePath) {
-          const delimiter = `ghadelimiter_${uuid_1.v4()}`;
-          // These should realistically never happen, but just in case someone finds a way to exploit uuid generation let's not allow keys or values that contain the delimiter.
-          if (name.includes(delimiter)) {
-            throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
-          }
-          if (convertedVal.includes(delimiter)) {
-            throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
-          }
-          const commandValue = `${name}<<${delimiter}${os.EOL}${convertedVal}${os.EOL}${delimiter}`;
-          file_command_1.issueCommand('ENV', commandValue);
-        } else {
-          command_1.issueCommand('set-env', {name}, convertedVal);
+          return file_command_1.issueFileCommand('ENV', file_command_1.prepareKeyValueMessage(name, val));
         }
+        command_1.issueCommand('set-env', {name}, convertedVal);
       }
       exports.exportVariable = exportVariable;
       /**
@@ -272,7 +261,7 @@
       function addPath(inputPath) {
         const filePath = process.env['GITHUB_PATH'] || '';
         if (filePath) {
-          file_command_1.issueCommand('PATH', inputPath);
+          file_command_1.issueFileCommand('PATH', inputPath);
         } else {
           command_1.issueCommand('add-path', {}, inputPath);
         }
@@ -311,7 +300,10 @@
         const inputs = getInput(name, options)
           .split('\n')
           .filter(x => x !== '');
-        return inputs;
+        if (options && options.trimWhitespace === false) {
+          return inputs;
+        }
+        return inputs.map(input => input.trim());
       }
       exports.getMultilineInput = getMultilineInput;
       /**
@@ -344,8 +336,12 @@
        */
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       function setOutput(name, value) {
+        const filePath = process.env['GITHUB_OUTPUT'] || '';
+        if (filePath) {
+          return file_command_1.issueFileCommand('OUTPUT', file_command_1.prepareKeyValueMessage(name, value));
+        }
         process.stdout.write(os.EOL);
-        command_1.issueCommand('set-output', {name}, value);
+        command_1.issueCommand('set-output', {name}, utils_1.toCommandValue(value));
       }
       exports.setOutput = setOutput;
       /**
@@ -485,7 +481,11 @@
        */
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       function saveState(name, value) {
-        command_1.issueCommand('save-state', {name}, value);
+        const filePath = process.env['GITHUB_STATE'] || '';
+        if (filePath) {
+          return file_command_1.issueFileCommand('STATE', file_command_1.prepareKeyValueMessage(name, value));
+        }
+        command_1.issueCommand('save-state', {name}, utils_1.toCommandValue(value));
       }
       exports.saveState = saveState;
       /**
@@ -592,13 +592,14 @@
           return result;
         };
       Object.defineProperty(exports, '__esModule', {value: true});
-      exports.issueCommand = void 0;
+      exports.prepareKeyValueMessage = exports.issueFileCommand = void 0;
       // We use any as a valid input type
       /* eslint-disable @typescript-eslint/no-explicit-any */
       const fs = __importStar(__nccwpck_require__(7147));
       const os = __importStar(__nccwpck_require__(2037));
+      const uuid_1 = __nccwpck_require__(5840);
       const utils_1 = __nccwpck_require__(5278);
-      function issueCommand(command, message) {
+      function issueFileCommand(command, message) {
         const filePath = process.env[`GITHUB_${command}`];
         if (!filePath) {
           throw new Error(`Unable to find environment variable for file command ${command}`);
@@ -610,7 +611,22 @@
           encoding: 'utf8',
         });
       }
-      exports.issueCommand = issueCommand;
+      exports.issueFileCommand = issueFileCommand;
+      function prepareKeyValueMessage(key, value) {
+        const delimiter = `ghadelimiter_${uuid_1.v4()}`;
+        const convertedValue = utils_1.toCommandValue(value);
+        // These should realistically never happen, but just in case someone finds a
+        // way to exploit uuid generation let's not allow keys or values that contain
+        // the delimiter.
+        if (key.includes(delimiter)) {
+          throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
+        }
+        if (convertedValue.includes(delimiter)) {
+          throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
+        }
+        return `${key}<<${delimiter}${os.EOL}${convertedValue}${os.EOL}${delimiter}`;
+      }
+      exports.prepareKeyValueMessage = prepareKeyValueMessage;
       //# sourceMappingURL=file-command.js.map
 
       /***/
@@ -1388,7 +1404,7 @@
           return result;
         };
       Object.defineProperty(exports, '__esModule', {value: true});
-      exports.getOctokitOptions = exports.GitHub = exports.context = void 0;
+      exports.getOctokitOptions = exports.GitHub = exports.defaults = exports.context = void 0;
       const Context = __importStar(__nccwpck_require__(4087));
       const Utils = __importStar(__nccwpck_require__(7914));
       // octokit + plugins
@@ -1397,7 +1413,7 @@
       const plugin_paginate_rest_1 = __nccwpck_require__(4193);
       exports.context = new Context.Context();
       const baseUrl = Utils.getApiBaseUrl();
-      const defaults = {
+      exports.defaults = {
         baseUrl,
         request: {
           agent: Utils.getProxyAgent(baseUrl),
@@ -1406,7 +1422,7 @@
       exports.GitHub = core_1.Octokit.plugin(
         plugin_rest_endpoint_methods_1.restEndpointMethods,
         plugin_paginate_rest_1.paginateRest
-      ).defaults(defaults);
+      ).defaults(exports.defaults);
       /**
        * Convience function to correctly format Octokit Options to pass into the constructor.
        *
@@ -10490,6 +10506,21 @@
       /***/
     },
 
+    /***/ 4069: /***/ (__unused_webpack_module, exports) => {
+      'use strict';
+
+      Object.defineProperty(exports, '__esModule', {value: true});
+      exports.filterCheckSuites = void 0;
+      function filterCheckSuites(checkSuites, gitBranch, status) {
+        return checkSuites
+          .filter(suite => suite.head_branch === gitBranch && suite.status === status)
+          .sort((a, b) => a.id - b.id);
+      }
+      exports.filterCheckSuites = filterCheckSuites;
+
+      /***/
+    },
+
     /***/ 399: /***/ function (__unused_webpack_module, exports, __nccwpck_require__) {
       'use strict';
 
@@ -10567,52 +10598,92 @@
       Object.defineProperty(exports, '__esModule', {value: true});
       const core = __importStar(__nccwpck_require__(2186));
       const github = __importStar(__nccwpck_require__(5438));
-      function run() {
-        var _a, _b;
+      const retry_1 = __nccwpck_require__(1043);
+      const filterCheckSuites_1 = __nccwpck_require__(4069);
+      function fetchCompletedSuites(octokit, {owner, gitBranch, repo}) {
         return __awaiter(this, void 0, void 0, function* () {
-          try {
-            const title = (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.title;
-            if (!title) {
-              console.log(`Skipping checks because action was not triggered in the context of a Pull Request.`);
-              process.exit(0);
-            }
-            const {owner, repo} = github.context.repo;
-            const gitBranch = core.getInput('GIT_BRANCH');
-            const githubToken = core.getInput('GITHUB_TOKEN', {required: true});
-            const octokit = github.getOctokit(githubToken);
-            const bypassPrefix = core.getInput('BYPASS_PREFIX');
-            const {data: checkSuitesPayload} = yield octokit.request(
-              'GET /repos/{owner}/{repo}/commits/{ref}/check-suites',
-              {
+          return new Promise((resolve, reject) =>
+            __awaiter(this, void 0, void 0, function* () {
+              const response = yield octokit.request('GET /repos/{owner}/{repo}/commits/{ref}/check-suites', {
                 owner,
                 ref: gitBranch,
                 repo,
+              });
+              const checkSuitesPayload = response.data;
+              const statusUpdates = checkSuitesPayload.check_suites.map(suite => suite.status);
+              console.log(
+                `Found "${checkSuitesPayload.total_count}" check suite(s) (${statusUpdates.join(
+                  ', '
+                )}) for repository "${repo}" owned by "${owner}".`
+              );
+              const inProgress = (0, filterCheckSuites_1.filterCheckSuites)(
+                checkSuitesPayload.check_suites,
+                gitBranch,
+                'in_progress'
+              );
+              if (inProgress.length > 0) {
+                const error = new Error('Waiting for check runs to finish...');
+                reject(error);
+              } else {
+                const completed = (0, filterCheckSuites_1.filterCheckSuites)(
+                  checkSuitesPayload.check_suites,
+                  gitBranch,
+                  'completed'
+                );
+                console.log(`Found "${completed.length}" completed check suites on branch "${gitBranch}".`);
+                resolve(completed);
               }
+            })
+          );
+        });
+      }
+      function run() {
+        var _a, _b;
+        return __awaiter(this, void 0, void 0, function* () {
+          const title =
+            ((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.title) || '';
+          const {owner, repo} = github.context.repo;
+          const bypassPrefix = process.env.CI ? core.getInput('BYPASS_PREFIX') : process.env.BYPASS_PREFIX;
+          const gitBranch = process.env.CI ? core.getInput('GIT_BRANCH') : process.env.GIT_BRANCH;
+          const ONE_MINUTE_IN_MILLIS = 60000;
+          const githubToken = process.env.CI
+            ? core.getInput('GITHUB_TOKEN', {required: true})
+            : process.env.GITHUB_TOKEN;
+          const octokit = github.getOctokit(`${githubToken}`);
+          try {
+            if (!title && process.env.CI) {
+              console.log(
+                `Skipping checks because action was not triggered in the context of a Pull Request on the CI environment.`
+              );
+              process.exit(0);
+            }
+            const completedCheckSuites = yield (0, retry_1.retry)(
+              () => {
+                return fetchCompletedSuites(octokit, {
+                  gitBranch: `${gitBranch}`,
+                  owner,
+                  repo,
+                });
+              },
+              Infinity,
+              ONE_MINUTE_IN_MILLIS
             );
-            console.log(
-              `Found "${checkSuitesPayload.total_count}" check suites for repository "${repo}" owned by "${owner}".`
-            );
-            const completedCheckSuites = checkSuitesPayload.check_suites
-              .filter(suite => {
-                return !!suite.conclusion && suite.head_branch === gitBranch && suite.status === 'completed';
-              })
-              .sort((a, b) => a.id - b.id);
             if (completedCheckSuites.length === 0) {
-              const errorMessage = `There are no completed (still pending or not created at all) check suites on branch "${gitBranch}". You can read more about check suites here: https://docs.github.com/en/rest/guides/getting-started-with-the-checks-api#about-check-suites`;
+              const errorMessage = `There are no completed check suites on branch "${gitBranch}". Check suites are either pending or didn't run at all. You can read more about check suites here: https://docs.github.com/en/rest/guides/getting-started-with-the-checks-api#about-check-suites`;
               throw new Error(errorMessage);
-            } else {
-              console.log(`Found "${completedCheckSuites.length}" completed check suites on branch "${gitBranch}".`);
             }
             const latestRun = completedCheckSuites[completedCheckSuites.length - 1];
             const commitUrl = `https://github.com/${owner}/${repo}/commit/${latestRun.head_sha}`;
             console.log(
-              `Latest check suite with ID "${latestRun.id}" on branch "${gitBranch}" ran with commit SHA "${
-                latestRun.head_sha
-              }" at "${new Date(latestRun.head_commit.timestamp).toISOString()}": ${commitUrl}`
+              `Latest check suite with ID "${latestRun.id}" ("${latestRun.status}/${
+                latestRun.conclusion
+              }") on branch "${gitBranch}" ran with commit SHA "${latestRun.head_sha}" at "${new Date(
+                latestRun.head_commit.timestamp
+              ).toISOString()}": ${commitUrl}`
             );
             const bypassMergeCheck = title.startsWith(bypassPrefix);
             if (latestRun.conclusion === 'failure' && !bypassMergeCheck) {
-              const errorMessage = `CI status check on branch "${gitBranch}" broke by this commit from "${
+              const errorMessage = `CI status check on branch "${gitBranch}" failed with this commit from "${
                 (_b = latestRun.head_commit.author) === null || _b === void 0 ? void 0 : _b.name
               }": ${commitUrl}`;
               throw new Error(errorMessage);
@@ -10624,13 +10695,56 @@
             }
           } catch (error) {
             if (error instanceof Error) {
-              core.setFailed(error.message);
+              core.setFailed(error);
               console.error(error);
             }
           }
         });
       }
       void run();
+
+      /***/
+    },
+
+    /***/ 1043: /***/ (__unused_webpack_module, exports, __nccwpck_require__) => {
+      'use strict';
+
+      Object.defineProperty(exports, '__esModule', {value: true});
+      exports.retry = void 0;
+      const wait_1 = __nccwpck_require__(5259);
+      function retry(
+        action,
+        retries = Infinity,
+        timeout = 0,
+        error = new Error('Function exceeded amount of retries.')
+      ) {
+        if (!retries) {
+          console.log(error.message);
+          console.log('All retries used.');
+          return Promise.reject(error);
+        }
+        return action().catch(error => {
+          retries -= 1;
+          console.log(`Checking again in "${timeout}ms"... Retries left: ${retries}`);
+          return (0, wait_1.wait)(timeout).then(() => {
+            return retry(action, retries, timeout, error);
+          });
+        });
+      }
+      exports.retry = retry;
+
+      /***/
+    },
+
+    /***/ 5259: /***/ (__unused_webpack_module, exports) => {
+      'use strict';
+
+      Object.defineProperty(exports, '__esModule', {value: true});
+      exports.wait = void 0;
+      function wait(timeout) {
+        return new Promise(resolve => setTimeout(resolve, timeout));
+      }
+      exports.wait = wait;
 
       /***/
     },
