@@ -4,7 +4,9 @@
   },
   "dependencies": {
     "@actions/core": "1.10.0",
-    "@actions/github": "5.1.1"
+    "@actions/github": "5.1.1",
+    "@types/ms": "0.7.31",
+    "ms": "2.1.3"
   },
   "description": "GitHub Action to stop Pull Request merges when your main branch is broken.",
   "devDependencies": {
