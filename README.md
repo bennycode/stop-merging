@@ -1,14 +1,18 @@
 # Stop Merging
 
-This action provides a status check to stop merging Pull Requests into your main branch, when your main branch is broken.
+This action performs a status check to prevent merging pull requests into the main branch when it is in a broken state.
 
 ## Problem statement
 
-When multiple developers work actively on the same repository, it can happen that developer A breaks the main branch but developers B and C are still merging their PRs into the main branch. Developers B and C won't be notified if they introduced additional bugs as the branch is already broken by developer A. It can therefore be beneficial to create a code freeze on the main branch so that developer A can provide a fix without running into additional merge conflicts or bugs introduced by developers B and C. The fix that will be provided by developer A can bypass the status check when a special prefix (like "fix") is used in the commit message.
+When multiple developers are simultaneously working on the same repository, it can occur that developer A breaks the main branch, but developers B and C continue to merge their PRs into the same branch. This can result in developers B and C being unaware if they have introduced additional bugs, since the main branch is already broken by developer A.
+
+To prevent the above scenario, it may be useful to implement a **code freeze** on the main branch, allowing developer A to resolve the issue without encountering additional merge conflicts or bugs introduced by developers B and C.
+
+This GitHub action represents such code freeze by using a status check that blocks all pull request merges unless they comply with a specific prefix (i.e. "[fix](https://www.conventionalcommits.org/en/v1.0.0/#specification)").
 
 ## What means "broken"?
 
-Your main branch is considered to be broken, when the latest commit on this branch has a failing [status check](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks).
+When the latest commit on your main branch has a failed [status check](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks), it is considered to be in a broken state.
 
 ## How to install?
 
@@ -51,7 +55,7 @@ Equip your base branch with branch protection rules:
 
 Enable "**Require status checks to pass before merging**" and make sure to have at least two status checks:
 
-1. A check if your branch is broken (i.e. a "test" suite with unit tests)
+1. A test suite to determine if your branch is broken (i.e. "test")
 2. The "Stop Merging" check (i.e. "check-main")
 
 It is also recommended to enable "**Require branches to be up to date before merging**". This will handle the following scenario:
@@ -59,7 +63,7 @@ It is also recommended to enable "**Require branches to be up to date before mer
 - Main branch is okay
 - Coder A creates a PR that passes the "Stop Merging" check
 - Coder B breaks the main branch
-- Coder A would now be able to still merge IF there wouldn't be the requirement to keep the branch up to date
+- Coder A's merge would still be possible if there was no requirement to keep the branch up to date
 
 **Screenshot:**
 
@@ -67,7 +71,7 @@ It is also recommended to enable "**Require branches to be up to date before mer
 
 ## How to use?
 
-When configured as a status check, this action will make your open Pull Requests fail when your configured main branch is broken. Only Pull Requests matching a specific title (for example "fix: Main branch") will be allowed to be merged in order to recover the health of your main branch. Once your main branch is green again, you can rerun the failing Stop Merging status checks to also become green again.
+When configured as a status check, this action will make your open pull requests fail when your configured main branch is broken. Only pull requests matching a specific title (for example "fix: Main branch") will be allowed to be merged in order to recover the health of your main branch. Once your main branch is green again, you can rerun the failing Stop Merging status checks to also become green again or update your branch which will automatically trigger this action.
 
 ## Configuration
 
@@ -87,17 +91,3 @@ steps:
       GIT_BRANCH: 'main'
       BYPASS_PREFIX: 'important'
 ```
-
-## Release Process
-
-1. Code gets compiled and bundled together with all its dependencies into a single file using `ncc`
-2. The bundled file is being referenced in [action.yml](./action.yml)
-3. Bundled code is uploaded to the repository
-4. New version gets semantically tagged in Git and released on GitHub
-
-## References
-
-- [GitHub Actions](https://github.com/features/actions)
-- [Commit Statuses](https://docs.github.com/rest/commits/statuses)
-- [Check Suites](https://docs.github.com/rest/checks/suites)
-- [TypeScript Template for GitHub Action](https://github.com/actions/typescript-action)
