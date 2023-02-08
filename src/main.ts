@@ -1,11 +1,10 @@
-import ms from 'ms';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import type {GitHub} from '@actions/github/lib/utils';
 import {retry} from './retry';
-import {CheckSuites, filterCompletedCheckSuites} from './filterCompletedCheckSuites';
+import {CheckSuites, filterCheckSuites} from './filterCheckSuites';
 
-async function checkSuites(
+async function fetchCompletedSuites(
   octokit: InstanceType<typeof GitHub>,
   {
     owner,
@@ -20,36 +19,43 @@ async function checkSuites(
   return new Promise(async (resolve, reject) => {
     // Checks API
     // https://docs.github.com/en/rest/checks/suites#list-check-suites-for-a-git-reference
-    const {data: checkSuitesPayload} = await octokit.request('GET /repos/{owner}/{repo}/commits/{ref}/check-suites', {
+    const response = await octokit.request('GET /repos/{owner}/{repo}/commits/{ref}/check-suites', {
       owner,
       ref: gitBranch,
       repo,
     });
 
-    console.log(`Found "${checkSuitesPayload.total_count}" check suites for repository "${repo}" owned by "${owner}".`);
+    const checkSuitesPayload = response.data;
 
-    // Find completed check runs
-    const completedCheckSuites = filterCompletedCheckSuites(checkSuitesPayload.check_suites, gitBranch);
+    const statusUpdates = checkSuitesPayload.check_suites.map(suite => suite.status);
 
-    if (completedCheckSuites.length === 0) {
-      const errorMessage = `There are no completed check suites on branch "${gitBranch}". Check suites are either pending or didn't run at all. You can read more about check suites here: https://docs.github.com/en/rest/guides/getting-started-with-the-checks-api#about-check-suites`;
-      const error = new Error(errorMessage);
+    console.log(
+      `Found "${checkSuitesPayload.total_count}" check suite(s) (${statusUpdates.join(
+        ', '
+      )}) for repository "${repo}" owned by "${owner}".`
+    );
+
+    // Find pending check runs
+    const inProgress = filterCheckSuites(checkSuitesPayload.check_suites, gitBranch, 'in_progress');
+
+    if (inProgress.length > 0) {
+      const error = new Error('Waiting for check runs to finish...');
       reject(error);
     } else {
-      console.log(`Found "${completedCheckSuites.length}" completed check suites on branch "${gitBranch}".`);
-      resolve(completedCheckSuites);
+      const completed = filterCheckSuites(checkSuitesPayload.check_suites, gitBranch, 'completed');
+      console.log(`Found "${completed.length}" completed check suites on branch "${gitBranch}".`);
+      resolve(completed);
     }
   });
 }
 
 async function run(): Promise<void> {
   // PR Title Check
-  const title = github.context.payload.pull_request?.title;
+  const title = github.context.payload.pull_request?.title || '';
   const {owner, repo} = github.context.repo;
   const bypassPrefix = process.env.CI ? core.getInput('BYPASS_PREFIX') : process.env.BYPASS_PREFIX;
   const gitBranch = process.env.CI ? core.getInput('GIT_BRANCH') : process.env.GIT_BRANCH;
-  const retries = process.env.CI ? core.getInput('STATUS_CHECK_RETRIES') : process.env.STATUS_CHECK_RETRIES;
-  const timeout = process.env.CI ? core.getInput('STATUS_CHECK_TIMEOUT') : process.env.STATUS_CHECK_TIMEOUT;
+  const ONE_MINUTE_IN_MILLIS = 60_000;
 
   // Authentication
   // https://github.com/actions/toolkit/tree/main/packages/github#usage
@@ -67,31 +73,38 @@ async function run(): Promise<void> {
 
     const completedCheckSuites = await retry(
       () => {
-        return checkSuites(octokit, {
+        return fetchCompletedSuites(octokit, {
           gitBranch: `${gitBranch}`,
           owner,
           repo,
         });
       },
-      parseInt(`${retries}`, 10),
-      ms(`${timeout}`)
+      Infinity,
+      ONE_MINUTE_IN_MILLIS
     );
+
+    if (completedCheckSuites.length === 0) {
+      const errorMessage = `There are no completed check suites on branch "${gitBranch}". Check suites are either pending or didn't run at all. You can read more about check suites here: https://docs.github.com/en/rest/guides/getting-started-with-the-checks-api#about-check-suites`;
+      throw new Error(errorMessage);
+    }
 
     const latestRun = completedCheckSuites[completedCheckSuites.length - 1];
 
     const commitUrl = `https://github.com/${owner}/${repo}/commit/${latestRun.head_sha}`;
 
     console.log(
-      `Latest check suite with ID "${latestRun.id}" on branch "${gitBranch}" ran with commit SHA "${
-        latestRun.head_sha
-      }" at "${new Date(latestRun.head_commit.timestamp).toISOString()}": ${commitUrl}`
+      `Latest check suite with ID "${latestRun.id}" ("${latestRun.status}/${
+        latestRun.conclusion
+      }") on branch "${gitBranch}" ran with commit SHA "${latestRun.head_sha}" at "${new Date(
+        latestRun.head_commit.timestamp
+      ).toISOString()}": ${commitUrl}`
     );
 
     // Check if there is a broken branch and if the PR addresses this with a commit that can bypass the status check
     const bypassMergeCheck = title.startsWith(bypassPrefix);
 
     if (latestRun.conclusion === 'failure' && !bypassMergeCheck) {
-      const errorMessage = `CI status check on branch "${gitBranch}" broke by this commit from "${latestRun.head_commit.author?.name}": ${commitUrl}`;
+      const errorMessage = `CI status check on branch "${gitBranch}" failed with this commit from "${latestRun.head_commit.author?.name}": ${commitUrl}`;
       throw new Error(errorMessage);
     } else {
       console.log(`Matched check suite with ID "${latestRun.id}" has status "${latestRun.conclusion}".`);

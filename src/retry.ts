@@ -13,6 +13,7 @@ export function retry<T>(
   }
   return action().catch(error => {
     retries -= 1;
+    console.log(`Checking again in "${timeout}ms"... Retries left: ${retries}`);
     return wait(timeout).then(() => {
       return retry(action, retries, timeout, error);
     });
