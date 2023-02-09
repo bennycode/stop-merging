@@ -1,4 +1,5 @@
 import {wait} from './wait';
+import {AbortError} from './AbortError';
 
 export function retry<T>(
   action: () => Promise<T>,
@@ -12,6 +13,9 @@ export function retry<T>(
     return Promise.reject(error);
   }
   return action().catch(error => {
+    if (error instanceof AbortError) {
+      throw error;
+    }
     retries -= 1;
     console.log(`Checking again in "${timeout}ms"... Retries left: ${retries}`);
     return wait(timeout).then(() => {

@@ -1,4 +1,5 @@
 import {retry} from './retry';
+import {AbortError} from './AbortError';
 
 describe('retry', () => {
   it('retries', async () => {
@@ -19,5 +20,13 @@ describe('retry', () => {
     await retry<void>(spiedAction, maxRuns, 1000);
     expect(run).toBe(maxRuns);
     expect(spiedAction).toHaveBeenCalledTimes(maxRuns);
+  });
+
+  it('allows to abort retries', async () => {
+    const maxRuns = 3;
+    const myAction = () => Promise.reject(new AbortError("Don't retry!"));
+    const spiedAction = jest.fn(myAction);
+    await expect(retry<void>(spiedAction, maxRuns, 1000)).rejects.toThrow("Don't retry!");
+    expect(spiedAction).toHaveBeenCalledTimes(1);
   });
 });
