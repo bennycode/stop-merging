@@ -1,3 +1,9 @@
+#### 1.0.1 (2023-02-09)
+
+##### Bug Fixes
+
+- Check only the latest status ([7b346fbe](https://github.com/bennycode/stop-merging/commit/7b346fbef9b40454abda2cd0fe80b1d9e701559c))
+
 #### 0.1.3 (2022-09-27)
 
 #### 0.1.2 (2022-09-27)
