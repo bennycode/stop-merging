@@ -10506,17 +10506,13 @@
       /***/
     },
 
-    /***/ 4069: /***/ (__unused_webpack_module, exports) => {
+    /***/ 2280: /***/ (__unused_webpack_module, exports) => {
       'use strict';
 
       Object.defineProperty(exports, '__esModule', {value: true});
-      exports.filterCheckSuites = void 0;
-      function filterCheckSuites(checkSuites, gitBranch, status) {
-        return checkSuites
-          .filter(suite => suite.head_branch === gitBranch && suite.status === status)
-          .sort((a, b) => a.id - b.id);
-      }
-      exports.filterCheckSuites = filterCheckSuites;
+      exports.AbortError = void 0;
+      class AbortError extends Error {}
+      exports.AbortError = AbortError;
 
       /***/
     },
@@ -10599,39 +10595,41 @@
       const core = __importStar(__nccwpck_require__(2186));
       const github = __importStar(__nccwpck_require__(5438));
       const retry_1 = __nccwpck_require__(1043);
-      const filterCheckSuites_1 = __nccwpck_require__(4069);
-      function fetchCompletedSuites(octokit, {owner, gitBranch, repo}) {
+      const AbortError_1 = __nccwpck_require__(2280);
+      function assertChecks(checkSuitesPayload, {repo, owner, gitBranch}) {
+        const statusUpdates = checkSuitesPayload.check_suites.map(suite => suite.status);
+        console.log(
+          `Found "${checkSuitesPayload.total_count}" check suite(s) (${statusUpdates.join(
+            ', '
+          )}) for repository "${repo}" owned by "${owner}".`
+        );
+        if (checkSuitesPayload.total_count === 0) {
+          const errorMessage = `There are no required status checks for branch "${gitBranch}" of repository "${owner}/${repo}". Please have a look at: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks`;
+          throw new AbortError_1.AbortError(errorMessage);
+        }
+      }
+      function fetchCompletedCheck(octokit, {owner, gitBranch, repo}) {
         return __awaiter(this, void 0, void 0, function* () {
           return new Promise((resolve, reject) =>
             __awaiter(this, void 0, void 0, function* () {
-              const response = yield octokit.request('GET /repos/{owner}/{repo}/commits/{ref}/check-suites', {
-                owner,
-                ref: gitBranch,
-                repo,
-              });
-              const checkSuitesPayload = response.data;
-              const statusUpdates = checkSuitesPayload.check_suites.map(suite => suite.status);
-              console.log(
-                `Found "${checkSuitesPayload.total_count}" check suite(s) (${statusUpdates.join(
-                  ', '
-                )}) for repository "${repo}" owned by "${owner}".`
+              const {data: checkSuitesPayload} = yield octokit.request(
+                'GET /repos/{owner}/{repo}/commits/{ref}/check-suites',
+                {
+                  owner,
+                  ref: gitBranch,
+                  repo,
+                }
               );
-              const inProgress = (0, filterCheckSuites_1.filterCheckSuites)(
-                checkSuitesPayload.check_suites,
-                gitBranch,
-                'in_progress'
-              );
-              if (inProgress.length > 0) {
+              assertChecks(checkSuitesPayload, {gitBranch, owner, repo});
+              const checks = checkSuitesPayload.check_suites;
+              const latestCheck = checks[checks.length - 1];
+              const isComplete = latestCheck.status === 'completed';
+              if (isComplete) {
+                console.log(`Found completed check suite on branch "${gitBranch}".`);
+                resolve(latestCheck);
+              } else {
                 const error = new Error('Waiting for check runs to finish...');
                 reject(error);
-              } else {
-                const completed = (0, filterCheckSuites_1.filterCheckSuites)(
-                  checkSuitesPayload.check_suites,
-                  gitBranch,
-                  'completed'
-                );
-                console.log(`Found "${completed.length}" completed check suites on branch "${gitBranch}".`);
-                resolve(completed);
               }
             })
           );
@@ -10640,26 +10638,26 @@
       function run() {
         var _a, _b;
         return __awaiter(this, void 0, void 0, function* () {
-          const title =
-            ((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.title) || '';
-          const {owner, repo} = github.context.repo;
+          const ONE_MINUTE_IN_MILLIS = 60000;
           const bypassPrefix = process.env.CI ? core.getInput('BYPASS_PREFIX') : process.env.BYPASS_PREFIX;
           const gitBranch = process.env.CI ? core.getInput('GIT_BRANCH') : process.env.GIT_BRANCH;
-          const ONE_MINUTE_IN_MILLIS = 60000;
+          const prTitle =
+            ((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.title) || '';
+          const {owner, repo} = github.context.repo;
           const githubToken = process.env.CI
             ? core.getInput('GITHUB_TOKEN', {required: true})
             : process.env.GITHUB_TOKEN;
           const octokit = github.getOctokit(`${githubToken}`);
           try {
-            if (!title && process.env.CI) {
+            if (!prTitle && process.env.CI) {
               console.log(
                 `Skipping checks because action was not triggered in the context of a Pull Request on the CI environment.`
               );
               process.exit(0);
             }
-            const completedCheckSuites = yield (0, retry_1.retry)(
+            const latestRun = yield (0, retry_1.retry)(
               () => {
-                return fetchCompletedSuites(octokit, {
+                return fetchCompletedCheck(octokit, {
                   gitBranch: `${gitBranch}`,
                   owner,
                   repo,
@@ -10668,11 +10666,6 @@
               Infinity,
               ONE_MINUTE_IN_MILLIS
             );
-            if (completedCheckSuites.length === 0) {
-              const errorMessage = `There are no completed check suites on branch "${gitBranch}". Check suites are either pending or didn't run at all. You can read more about check suites here: https://docs.github.com/en/rest/guides/getting-started-with-the-checks-api#about-check-suites`;
-              throw new Error(errorMessage);
-            }
-            const latestRun = completedCheckSuites[completedCheckSuites.length - 1];
             const commitUrl = `https://github.com/${owner}/${repo}/commit/${latestRun.head_sha}`;
             console.log(
               `Latest check suite with ID "${latestRun.id}" ("${latestRun.status}/${
@@ -10681,7 +10674,7 @@
                 latestRun.head_commit.timestamp
               ).toISOString()}": ${commitUrl}`
             );
-            const bypassMergeCheck = title.startsWith(bypassPrefix);
+            const bypassMergeCheck = prTitle.startsWith(bypassPrefix);
             if (latestRun.conclusion === 'failure' && !bypassMergeCheck) {
               const errorMessage = `CI status check on branch "${gitBranch}" failed with this commit from "${
                 (_b = latestRun.head_commit.author) === null || _b === void 0 ? void 0 : _b.name
@@ -10712,6 +10705,7 @@
       Object.defineProperty(exports, '__esModule', {value: true});
       exports.retry = void 0;
       const wait_1 = __nccwpck_require__(5259);
+      const AbortError_1 = __nccwpck_require__(2280);
       function retry(
         action,
         retries = Infinity,
@@ -10724,6 +10718,9 @@
           return Promise.reject(error);
         }
         return action().catch(error => {
+          if (error instanceof AbortError_1.AbortError) {
+            throw error;
+          }
           retries -= 1;
           console.log(`Checking again in "${timeout}ms"... Retries left: ${retries}`);
           return (0, wait_1.wait)(timeout).then(() => {

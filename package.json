@@ -74,5 +74,5 @@
     "test:unit": "cross-env NODE_ENV=test jest ./src --passWithNoTests",
     "test:unit:coverage": "yarn test:unit --coverage"
   },
-  "version": "1.0.0"
+  "version": "1.0.1"
 }
