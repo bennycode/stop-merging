@@ -13,8 +13,8 @@ type RepositoryInfo = {
 
 function assertChecks(
   checkSuitesPayload: {
-    total_count: number;
     check_suites: CheckSuites;
+    total_count: number;
   },
   {repo, owner, gitBranch}: RepositoryInfo
 ) {
@@ -47,7 +47,7 @@ async function fetchCompletedCheck(
       repo,
     });
 
-    assertChecks(checkSuitesPayload, {repo, owner, gitBranch});
+    assertChecks(checkSuitesPayload, {gitBranch, owner, repo});
 
     const checks = checkSuitesPayload.check_suites;
     const latestCheck = checks[checks.length - 1];
