@@ -68,6 +68,9 @@ async function run(): Promise<void> {
 
   const bypassPrefix = process.env.CI ? core.getInput('BYPASS_PREFIX') : process.env.BYPASS_PREFIX;
   const gitBranch = process.env.CI ? core.getInput('GIT_BRANCH') : process.env.GIT_BRANCH;
+  const timeout = process.env.CI ? core.getInput('INTERVAL_RETRIES') : process.env.INTERVAL_RETRIES;
+
+  console.log('Configuration', {bypassPrefix, gitBranch, timeout});
 
   const prTitle = github.context.payload.pull_request?.title || '';
   const {owner, repo} = github.context.repo;
@@ -94,7 +97,7 @@ async function run(): Promise<void> {
           repo,
         });
       },
-      Infinity,
+      typeof timeout === 'string' ? parseInt(timeout) : Infinity,
       ONE_MINUTE_IN_MILLIS
     );
 

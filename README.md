@@ -77,9 +77,10 @@ When configured as a status check, this action will make your open pull requests
 
 The following parameters can be configured:
 
-- `GITHUB_TOKEN`: Token to be used by the Stop Merging action to authenticate with your repository
-- `GIT_BRANCH`: Git branch to check for status (defaults to **main**)
 - `BYPASS_PREFIX`: Prefix for commit messages that can bypass the status check (defaults to **fix**)
+- `GIT_BRANCH`: Git branch to check for status (defaults to **main**)
+- `GITHUB_TOKEN`: Token to be used by the Stop Merging action to authenticate with your repository
+- `INTERVAL_RETRIES`: How many times should this action perform a check for a suite to see if it's finished, within a 1-minute interval? (defaults to **Infinity**)
 
 Example:
 
