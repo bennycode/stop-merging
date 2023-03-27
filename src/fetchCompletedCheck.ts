@@ -9,8 +9,8 @@ import {assertChecks} from './assertChecks';
 export async function fetchCompletedCheck(
   octokit: InstanceType<typeof GitHub>,
   {owner, gitBranch, repo}: RepositoryInfo
-): Promise<CheckSuite> {
-  return new Promise(async (resolve, reject) => {
+) {
+  return new Promise<CheckSuite>(async (resolve, reject) => {
     // Checks API
     // https://docs.github.com/en/rest/checks/suites#list-check-suites-for-a-git-reference
     const {data: checkSuitesPayload} = await octokit.request('GET /repos/{owner}/{repo}/commits/{ref}/check-suites', {
