@@ -1,67 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import type {GitHub} from '@actions/github/lib/utils';
 import {retry} from './retry';
-import {AbortError} from './AbortError';
-import type {CheckSuite, CheckSuites} from './filterChecks';
-
-type RepositoryInfo = {
-  gitBranch: string;
-  owner: string;
-  repo: string;
-};
-
-function assertChecks(
-  checkSuitesPayload: {
-    check_suites: CheckSuites;
-    total_count: number;
-  },
-  {repo, owner, gitBranch}: RepositoryInfo
-) {
-  const statusUpdates = checkSuitesPayload.check_suites.map(suite => suite.status);
-  console.log(
-    `Found "${checkSuitesPayload.total_count}" check suite(s) (${statusUpdates.join(
-      ', '
-    )}) for repository "${repo}" owned by "${owner}".`
-  );
-
-  if (checkSuitesPayload.total_count === 0) {
-    const errorMessage = `There are no required status checks for branch "${gitBranch}" of repository "${owner}/${repo}". Please have a look at: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks`;
-    throw new AbortError(errorMessage);
-  }
-}
-
-/**
- * Iterates over all check suites and resolves once the latest check suite is complete.
- */
-async function fetchCompletedCheck(
-  octokit: InstanceType<typeof GitHub>,
-  {owner, gitBranch, repo}: RepositoryInfo
-): Promise<CheckSuite> {
-  return new Promise(async (resolve, reject) => {
-    // Checks API
-    // https://docs.github.com/en/rest/checks/suites#list-check-suites-for-a-git-reference
-    const {data: checkSuitesPayload} = await octokit.request('GET /repos/{owner}/{repo}/commits/{ref}/check-suites', {
-      owner,
-      ref: gitBranch,
-      repo,
-    });
-
-    assertChecks(checkSuitesPayload, {gitBranch, owner, repo});
-
-    const checks = checkSuitesPayload.check_suites;
-    const latestCheck = checks[checks.length - 1];
-    const isComplete = latestCheck.status === 'completed';
-
-    if (isComplete) {
-      console.log(`Found completed check suite on branch "${gitBranch}".`);
-      resolve(latestCheck);
-    } else {
-      const error = new Error('Waiting for check runs to finish...');
-      reject(error);
-    }
-  });
-}
+import {fetchCompletedCheck} from './fetchCompletedCheck';
 
 async function run(): Promise<void> {
   const ONE_MINUTE_IN_MILLIS = 60_000;
