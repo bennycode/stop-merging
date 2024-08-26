@@ -50,6 +50,9 @@
     "type": "git",
     "url": "git+https://github.com/bennycode/stop-merging.git"
   },
+  "resolutions": {
+    "semver": "^7.3.7"
+  },
   "scripts": {
     "build": "ncc build src/main.ts -o release",
     "changelog:commit": "git add CHANGELOG.md && git commit -m \"chore: Update release\"",
