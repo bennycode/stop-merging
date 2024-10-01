@@ -10,7 +10,7 @@
   "devDependencies": {
     "@evilmartians/lefthook": "^1.7.14",
     "@types/jest": "^29.5.12",
-    "@types/node": "^22.5.1",
+    "@types/node": "^22.7.4",
     "@typescript-eslint/eslint-plugin": "^5.51.0",
     "@typescript-eslint/parser": "^5.51.0",
     "@vercel/ncc": "^0.38.1",
