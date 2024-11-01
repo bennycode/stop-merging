@@ -3,7 +3,7 @@
     "url": "https://github.com/bennycode/stop-merging/issues"
   },
   "dependencies": {
-    "@actions/core": "1.10.1",
+    "@actions/core": "1.11.1",
     "@actions/github": "6.0.0"
   },
   "description": "GitHub Action to stop Pull Request merges when your main branch is broken.",
