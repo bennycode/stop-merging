@@ -8,7 +8,7 @@
   },
   "description": "GitHub Action to stop Pull Request merges when your main branch is broken.",
   "devDependencies": {
-    "@evilmartians/lefthook": "^1.11.12",
+    "@evilmartians/lefthook": "^1.11.13",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.3",
     "@typescript-eslint/eslint-plugin": "^5.51.0",
