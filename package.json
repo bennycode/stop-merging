@@ -13,7 +13,7 @@
     "@types/node": "^24.3.0",
     "@typescript-eslint/eslint-plugin": "^5.51.0",
     "@typescript-eslint/parser": "^5.51.0",
-    "@vercel/ncc": "^0.38.3",
+    "@vercel/ncc": "^0.38.4",
     "cross-env": "^10.0.0",
     "dotenv-defaults": "^5.0.2",
     "eslint": "^8.57.1",
