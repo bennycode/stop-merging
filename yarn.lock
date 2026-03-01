@@ -1948,17 +1948,17 @@ doctrine@^3.0.0:
   dependencies:
     esutils "^2.0.2"
 
-dotenv-defaults@^5.0.2:
-  version "5.0.2"
-  resolved "https://registry.npmjs.org/dotenv-defaults/-/dotenv-defaults-5.0.2.tgz#065c410ea516011651e9c60dae0c8902ec53d609"
-  integrity sha512-y5z4NhblzwNk8XBIYVzjLcFkANK0rxbRDO6kGOfH9QrVYIGVEX52IqwSprKVsaLHM9pnNkCSxazZF/JPydDPvA==
+dotenv-defaults@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.npmjs.org/dotenv-defaults/-/dotenv-defaults-6.0.0.tgz#f0470461af3da440c7a4b2dfd73d6ac4770a2df8"
+  integrity sha512-188MG1/VIYdj9tHfi/CKdkLWprlzIL0djWIVqVAjNHgpFUprIr+zvAQcs3E1gA1ItIiC3DijuQcrasc+cMJdlQ==
   dependencies:
-    dotenv "^14.0.0"
+    dotenv "^16.4.7"
 
-dotenv@^14.0.0:
-  version "14.3.2"
-  resolved "https://registry.npmjs.org/dotenv/-/dotenv-14.3.2.tgz#7c30b3a5f777c79a3429cb2db358eef6751e8369"
-  integrity sha512-vwEppIphpFdvaMCaHfCEv9IgwcxMljMw2TnAQBB4VWPvzXQLTb82jwmdOKzlEVUL3gNFT4l4TPKO+Bn+sqcrVQ==
+dotenv@^16.4.7:
+  version "16.6.1"
+  resolved "https://registry.npmjs.org/dotenv/-/dotenv-16.6.1.tgz#773f0e69527a8315c7285d5ee73c4459d20a8020"
+  integrity sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==
 
 eastasianwidth@^0.2.0:
   version "0.2.0"
