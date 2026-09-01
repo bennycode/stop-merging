@@ -500,10 +500,10 @@
   resolved "https://registry.npmjs.org/@eslint/js/-/js-8.57.1.tgz#de633db3ec2ef6a3c89e2f19038063e8a122e2c2"
   integrity sha512-d9zaMRSTIKDLhctzH12MtXvJKSSUhaHcjV+2Z+GK+EEY7XKpP5yR4x+N3TAcHTcu963nIr+TMcCb4DBCYX1z6Q==
 
-"@evilmartians/lefthook@^2.1.10":
-  version "2.1.10"
-  resolved "https://registry.npmjs.org/@evilmartians/lefthook/-/lefthook-2.1.10.tgz#3fcedfea7b9955f42b464bb3534df6280cb8bcec"
-  integrity sha512-l5tiHiPQQdFE27g8j8Y1fgvGP9jiIxaxU3Bejq845hJn3M1OT2+QwjB/oqIIb7px2cTxUqFndTCSxK+HPY40rg==
+"@evilmartians/lefthook@^2.1.12":
+  version "2.1.12"
+  resolved "https://registry.npmjs.org/@evilmartians/lefthook/-/lefthook-2.1.12.tgz#13ebe03f961bb3c8e1f9a1843f66f6b301a551c4"
+  integrity sha512-y/QRYkKeuJSSebsxt3COI3HIyc7mgWAwTXQLVdVFpprBb5XIC8jV20DLDYcbkmUHoQUq8yHkkGfkMDSR34xjbw==
 
 "@fastify/busboy@^2.0.0":
   version "2.1.1"
